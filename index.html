@@ -8,7 +8,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="theme-color" content="#0b0f1a"/>
 <title>GCUF Navigator</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preconnect" href="https://unpkg.com"/>
+<link rel="preconnect" href="https://a.basemaps.cartocdn.com"/>
+<link rel="preconnect" href="https://b.basemaps.cartocdn.com"/>
+<link rel="preconnect" href="https://c.basemaps.cartocdn.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <style>
 :root{
@@ -21,7 +27,7 @@
   --glow:rgba(59,130,246,0.18);--radius:12px;
   --sidebar-w:320px;
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
 body{display:flex;flex-direction:column;}
 .app{display:flex;flex:1;overflow:hidden;position:relative;}
@@ -57,7 +63,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
   50%{opacity:.6;box-shadow:0 0 0 5px rgba(16,185,129,0);}}
 
 /* ─── SIDEBAR ─── */
-.sidebar{
+.sidebar{will-change:transform;
   width:var(--sidebar-w);flex-shrink:0;
   background:var(--panel);border-right:1px solid var(--border);
   display:flex;flex-direction:column;overflow:hidden;
@@ -66,7 +72,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
 
 /* mobile sidebar overlay */
 @media(max-width:700px){
-  .sidebar{
+  .sidebar{will-change:transform;
     position:absolute;top:0;left:0;bottom:0;
     width:290px;transform:translateX(-100%);
     box-shadow:4px 0 32px rgba(0,0,0,.7);
@@ -123,7 +129,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
 .cat:hover,.cat.on{background:var(--accent);border-color:var(--accent);color:#fff;}
 
 /* ─── LIST ─── */
-.list{flex:1;overflow-y:auto;padding:7px;}
+.list{flex:1;overflow-y:auto;padding:7px;-webkit-overflow-scrolling:touch;will-change:scroll-position;}
 .list::-webkit-scrollbar{width:3px;}
 .list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 .list-label{font-size:9px;letter-spacing:1.8px;text-transform:uppercase;
@@ -142,7 +148,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
 
 /* ─── MAP ─── */
 .mapwrap{flex:1;position:relative;overflow:hidden;}
-#map{width:100%;height:100%;}
+#map{width:100%;height:100%;will-change:transform;transform:translateZ(0);}
 
 /* ─── MOBILE MENU BTN ─── */
 .mob-menu{
@@ -359,6 +365,24 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
   </div>
 </div>
 
+<div id="splash" style="
+  position:fixed;inset:0;background:#0e1117;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  transition:opacity .5s ease;
+">
+  <div style="font-size:48px">🎓</div>
+  <div style="font-family:sans-serif;font-size:20px;font-weight:700;color:#60a5fa;letter-spacing:-0.5px">GCUF Navigator</div>
+  <div style="font-family:sans-serif;font-size:11px;color:#4b5a72;letter-spacing:2px;text-transform:uppercase">New Campus · Faisalabad</div>
+  <div style="margin-top:8px;display:flex;gap:6px">
+    <div style="width:8px;height:8px;border-radius:50%;background:#3b82f6;animation:sd .8s infinite alternate"></div>
+    <div style="width:8px;height:8px;border-radius:50%;background:#3b82f6;animation:sd .8s .2s infinite alternate"></div>
+    <div style="width:8px;height:8px;border-radius:50%;background:#3b82f6;animation:sd .8s .4s infinite alternate"></div>
+  </div>
+</div>
+<style>
+@keyframes sd{from{opacity:.2;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+</style>
+
 <div id="toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -412,15 +436,13 @@ PLACES.forEach(p=>{
 });
 
 // ══════════ MAP ══════════
-const map=L.map('map',{center:[31.3888,73.0275],zoom:17,zoomControl:false});
+const map=L.map('map',{center:[31.3888,73.0275],zoom:16,zoomControl:false,preferCanvas:true,renderer:L.canvas()});
 // Dark grey map tile
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
   attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:20
 }).addTo(map);
 // Labels layer on top (lighter grey)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{
-  attribution:'',subdomains:'abcd',maxZoom:20,opacity:.6
-}).addTo(map);
+// labels merged into dark_all tile
 L.control.zoom({position:'topright'}).addTo(map);
 
 function mkIcon(p){
@@ -718,6 +740,12 @@ window.openSidebar=openSidebar;
 window.closeSidebar=closeSidebar;
 window.closeSidebarMob=closeSidebarMob;
 
+  map.whenReady(()=>{
+    setTimeout(()=>{
+      const s=document.getElementById('splash');
+      if(s){s.style.opacity='0';setTimeout(()=>s.remove(),500);}
+    },400);
+  });
 }); // end window.onload
 </script>
 </body>
